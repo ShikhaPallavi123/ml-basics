@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html{background:#26292d;color-scheme:dark}body{margin:0}[hidden]{display:none!important}</style>
+<meta name="description" content="Part 4 of a visual, interactive machine learning series: the same gradient descent written three ways, checked for correctness and measured for speed.">
+<meta property="og:title" content="Making Gradient Descent Fast">
+<meta property="og:description" content="Part 4 of a visual, interactive machine learning series: the same gradient descent written three ways, checked for correctness and measured for speed.">
+<meta property="og:type" content="article">
+<meta name="author" content="Shikha Pallavi">
+<title>Making Gradient Descent Fast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Caveat:wght@600;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: chalkboard column, one board per idea, a live demo on most boards */
+:root{
+  --board:#26292d; --board2:#1d1f22; --chalk:#f4f1ea; --chalk-dim:#c4c1b8;
+  --blue:#5ad1ff; --orange:#ffb347; --pink:#ff86bd; --green:#8fe58b; --red:#ff6b6b;
+  --line:rgba(244,241,234,.18);
+  --f-display:'Oswald','Arial Narrow',Impact,sans-serif;
+  --f-hand:'Caveat','Comic Sans MS',cursive;
+  --f-body:'Nunito','Segoe UI',system-ui,sans-serif;
+  --f-math:'Cambria Math','Times New Roman',Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--board);
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(255,255,255,.07),transparent 55%),radial-gradient(ellipse at 90% 60%,rgba(255,255,255,.05),transparent 50%);
+  color:var(--chalk);font-family:var(--f-body);font-size:18px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:32px 64px;
+}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:60px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:.01em}
+h1{font-size:clamp(40px,9vw,72px);font-weight:700}
+h1 .b,h2 .b{color:var(--blue)}
+h2{font-size:clamp(28px,6vw,40px);font-weight:700;display:inline-block;align-self:flex-start;padding-bottom:6px;border-bottom:4px solid var(--chalk);border-radius:2px}
+p{margin:0;max-width:65ch}
+.eyebrow{font-family:var(--f-hand);font-size:28px;color:var(--orange);display:block;margin-bottom:6px}
+mark{background:none;color:var(--chalk);font-weight:800;box-shadow:inset 0 -.45em 0 rgba(90,209,255,.35)}
+.board{display:flex;flex-direction:column;gap:20px}
+.hero{display:flex;flex-direction:column;gap:18px;padding-top:12px}
+.hero .lead{font-size:21px;max-width:56ch}
+.doodle{display:flex;gap:10px;flex-wrap:wrap}
+.chip{font-family:var(--f-hand);font-size:24px;padding:2px 14px;border:2px solid currentColor;border-radius:999px;display:inline-block;animation:bob 3s ease-in-out infinite}
+.chip:nth-child(2){animation-delay:.4s}.chip:nth-child(3){animation-delay:.8s}.chip:nth-child(4){animation-delay:1.2s}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1.5deg)}}
+.c-blue{color:var(--blue)}.c-orange{color:var(--orange)}.c-pink{color:var(--pink)}.c-green{color:var(--green)}.c-red{color:var(--red)}
+.note{font-family:var(--f-hand);font-size:24px;color:var(--orange);line-height:1.25}
+.card{border:2px dashed var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;background:rgba(0,0,0,.14)}
+.card.hl{border-color:var(--blue);border-style:solid}
+.tag{font-family:var(--f-hand);font-size:26px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+
+button{font-family:var(--f-hand);font-size:23px;background:transparent;color:var(--chalk);border:2.5px solid var(--chalk-dim);border-radius:999px;padding:2px 18px;cursor:pointer;transition:transform .15s,background .15s}
+button:hover{transform:scale(1.05);background:rgba(255,255,255,.08)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+button[aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:rgba(90,209,255,.12)}
+button.ok{border-color:var(--green);color:var(--green);background:rgba(143,229,139,.12)}
+button.no{border-color:var(--red);color:var(--red);background:rgba(255,107,107,.12)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ctl label{font-family:var(--f-hand);font-size:24px;display:flex;justify-content:space-between;gap:10px}
+.ctl output{color:var(--orange)}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+
+.svgbox{border:2px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);padding:8px;max-width:100%}
+.svgbox svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--f-hand)}
+.stat{font-family:var(--f-hand);font-size:27px;line-height:1.3}
+
+/* small data table on dark board */
+.tablewrap{overflow-x:auto;max-width:100%;border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:420px;background:#eef3f6;color:#22282c;font-size:16px}
+th{background:#d7eaf1;text-align:left;padding:8px 12px;font-weight:800}
+td{padding:8px 12px;border-top:1px solid #d3dde2;font-variant-numeric:tabular-nums}
+td.e{font-weight:800}
+td.zero{color:#0b8a3a}
+
+/* formulas */
+.formula{font-family:var(--f-math);font-size:clamp(22px,5vw,34px);border:2.5px solid var(--orange);border-radius:10px;padding:12px 18px;background:rgba(255,179,71,.1);color:var(--orange);overflow-x:auto;max-width:100%;white-space:nowrap}
+.formula.blue{border-color:var(--blue);background:rgba(90,209,255,.1);color:var(--blue)}
+.formula i{font-style:italic}
+.formula sub{font-size:.6em}
+.formula span[data-p]{padding:0 4px;border-radius:6px;transition:background .25s,box-shadow .25s}
+.formula span.on{background:rgba(255,255,255,.2);box-shadow:0 0 0 2px var(--chalk)}
+.formula span.dim{opacity:.35}
+
+/* feature chips */
+.flist{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-family:var(--f-hand);font-size:22px;border:2px solid currentColor;border-radius:999px;padding:0 14px}
+
+/* error method */
+.errs{display:flex;gap:10px;flex-wrap:wrap}
+.err{font-family:var(--f-hand);font-size:30px;min-width:64px;text-align:center;border:2.5px solid;border-radius:10px;padding:2px 12px;transition:all .3s}
+.err.pos{color:var(--green)}.err.neg{color:var(--red)}
+.big{font-family:var(--f-hand);font-size:36px}
+
+.meter{height:14px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px;transition:width .4s,background .4s}
+
+.quiz{display:flex;flex-direction:column;gap:14px}
+.q{border:2px dashed var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.q .qt{font-weight:800}
+.opts{display:flex;gap:10px;flex-wrap:wrap}
+.fb{min-height:1.5em;font-size:16px;color:var(--chalk-dim)}
+.score{font-family:var(--f-hand);font-size:28px;color:var(--orange)}
+.recap{display:grid;gap:12px}
+.recap div{display:flex;gap:14px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.recap b{font-family:var(--f-display);font-weight:500;min-width:10ch;font-size:20px;flex:none}
+footer{font-family:var(--f-hand);font-size:24px;color:var(--chalk-dim)}
+@media (max-width:520px){.recap b{min-width:8ch}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<style>
+.series{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-family:var(--f-body);font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.series .lbl{color:var(--chalk-dim);margin-right:6px}
+.series a,.series .cur{border:2px solid var(--line);border-radius:999px;padding:2px 14px;color:var(--chalk-dim);text-decoration:none}
+.series a:hover{color:var(--chalk);border-color:var(--chalk-dim)}
+.series a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.series .cur{background:var(--blue);border-color:var(--blue);color:var(--board)}
+.foot{display:flex;flex-direction:column;gap:14px;border-top:2px dashed var(--line);padding-top:24px}
+.foot p{font-family:var(--f-body);font-size:16px;color:var(--chalk-dim)}
+</style>
+<style>
+pre{margin:0;background:rgba(0,0,0,.35);border:2px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:14px;line-height:1.5;color:var(--chalk)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.race{display:flex;flex-direction:column;gap:14px}
+.row{display:grid;grid-template-columns:110px 1fr 90px;gap:10px;align-items:center;font-size:16px}
+.row .nm{font-family:var(--f-hand);font-size:24px}
+.track{height:22px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.track i{display:block;height:100%;width:0;border-radius:99px;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.row .tm{font-variant-numeric:tabular-nums;text-align:right;color:var(--chalk-dim)}
+.cta{border:2.5px solid var(--green);border-radius:14px;padding:22px 24px;background:rgba(0,0,0,.18);display:flex;flex-direction:column;gap:12px}
+.cta a.go{align-self:flex-start;padding:12px 22px;border-radius:999px;background:var(--green);color:#1d1f22;font-weight:800;text-decoration:none}
+@media (max-width:520px){.row{grid-template-columns:78px 1fr 70px}}
+</style>
+<div class="wrap">
+
+<nav class="series" aria-label="Series navigation"><span class="lbl">Series</span><a href="part-1-foundations.html">1 · Foundations</a><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><span class="cur" aria-current="page">4 · Fast Gradient Descent</span></nav>
+
+<header class="hero">
+<span class="eyebrow">Part 4 of 4 · Visual and interactive · 6 min read</span>
+<h1>Making Gradient Descent <span class="b">Fast</span></h1>
+<p class="by">By Shikha Pallavi</p>
+<p><a href="https://www.kaggle.com/code/shikhapallavi/making-gradient-descent-fast-loops-vs-vectorizati" target="_blank" rel="noopener" style="display:inline-block;padding:8px 16px;border-radius:999px;border:2px solid #8fe58b;color:#8fe58b;font-weight:800;font-size:14px;text-decoration:none">&#9654; Run the code for this part</a></p>
+<p class="lead">The algorithm from Part 3 can finish in seconds or in milliseconds. The math is identical. What changes is how you <mark>write it</mark>. Here are three versions, a correctness check, and real measurements.</p>
+<div class="doodle"><span class="chip c-red">loop</span><span class="chip c-blue">numpy</span><span class="chip c-green">matrix</span><span class="chip c-orange">measure</span></div>
+</header>
+
+<section class="board">
+<h2>One update, <span class="b">three</span> ways</h2>
+<p>Every version repeats the same two lines of math: nudge &theta;<sub>0</sub> and &theta;<sub>1</sub> against the average error.</p>
+<div class="grid2">
+<div class="card"><span class="tag c-red">A &middot; Python loop</span><pre><code>for step in range(steps):
+    g0 = g1 = 0.0
+    for i in range(n):              # one sample at a time
+        err = t0 + t1*x[i] - y[i]
+        g0 += err
+        g1 += err * x[i]
+    t0 -= alpha * g0 / n
+    t1 -= alpha * g1 / n</code></pre></div>
+<div class="card"><span class="tag c-blue">B &middot; NumPy</span><pre><code>for step in range(steps):
+    err = t0 + t1*x - y             # whole array at once
+    t0 -= alpha * err.mean()
+    t1 -= alpha * (err * x).mean()</code></pre></div>
+</div>
+<div class="card"><span class="tag c-green">C &middot; Matrix form</span><pre><code>X = np.column_stack([np.ones(n), x])
+for step in range(steps):
+    theta -= alpha * (X.T @ (X @ theta - y)) / n</code></pre><p>Stack a column of ones next to x and the whole gradient is one line, <b>X&#7488;(X&theta; &minus; y) / n</b>. It also works unchanged with many features.</p></div>
+</section>
+
+<section class="board">
+<h2>Check it <span class="b">first</span></h2>
+<p>A fast wrong answer is useless. On the same 2,000 points, all three versions land on exactly the same parameters:</p>
+<div class="card hl"><div class="stat">&theta;<sub>0</sub> = <span class="c-orange">4.001178</span> &nbsp; &theta;<sub>1</sub> = <span class="c-orange">2.997182</span></div><p>The data was generated from &theta;<sub>0</sub> = 4 and &theta;<sub>1</sub> = 3 plus a little noise, so this is what we expect.</p></div>
+</section>
+
+<section class="board">
+<h2>The <span class="b">race</span></h2>
+<p>Pick a data size and start the race. Bar length shows time for 200 steps, relative to the slowest version at that size.</p>
+<div class="card race">
+<div class="btns" id="sizes" role="group" aria-label="Number of samples"></div>
+<div id="rows"></div>
+<div class="note" id="verdict" aria-live="polite">&nbsp;</div>
+<div><button id="go">Start the race</button></div>
+<p style="font-size:14px;color:var(--chalk-dim)">Measured in a notebook run on a 2-core cloud machine: 200 steps, best of a few runs. Your numbers will differ, the pattern should not. The pure Python loop is not run at 1,000,000 samples because it takes too long to wait for.</p>
+</div>
+</section>
+
+<section class="board">
+<h2>Why the <span class="b">gap</span>?</h2>
+<div class="grid2">
+<div class="card"><span class="tag c-red">Interpreter overhead</span><p>Each <code>x[i]</code>, multiply and add in a Python loop passes through the interpreter, which does extra work on every one.</p></div>
+<div class="card"><span class="tag c-blue">Compiled inner loops</span><p>NumPy runs the same arithmetic in compiled code over a contiguous block of memory, often with the CPU&rsquo;s vector instructions.</p></div>
+</div>
+<div class="card"><span class="tag c-green">One operation, same story</span><p>Summing the squares of 1,000,000 numbers took <b>86.1 ms</b> in a Python loop and <b>1.53 ms</b> with NumPy in the same notebook run.</p></div>
+<p>One honest detail from the table: the matrix form was not always faster than plain NumPy. At 100,000 samples B won; at 1,000,000 samples C won. Which is faster depends on size and hardware, which is exactly why you measure.</p>
+</section>
+
+<section class="board">
+<h2>Profile, don&rsquo;t <span class="b">guess</span></h2>
+<p>Before optimizing anything, ask the profiler where the time goes. Python ships with one:</p>
+<pre><code>import cProfile, pstats
+pr = cProfile.Profile(); pr.enable()
+gd_numpy(x, y, steps=50)
+pr.disable()
+pstats.Stats(pr).sort_stats("cumulative").print_stats(6)</code></pre>
+<p>The notebook runs this and shows the result, so you can see which lines dominate before you change a thing.</p>
+</section>
+
+<section class="board">
+<h2>Quick <span class="b">check</span></h2>
+<div class="quiz" id="quiz"></div>
+<div class="score" id="score" aria-live="polite"></div>
+</section>
+
+<section class="board">
+<h2>What to <span class="b">remember</span></h2>
+<div class="recap">
+<div><b>Same math</b><span>The algorithm is identical. The implementation decides the speed.</span></div>
+<div><b>Vectorize</b><span>Move loops over data into compiled code.</span></div>
+<div><b>Check first</b><span>Confirm the versions agree before comparing speed.</span></div>
+<div><b>Measure</b><span>Use best-of-several timings and a profiler instead of guessing.</span></div>
+</div>
+</section>
+
+<aside class="cta"><div style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#8fe58b">Hands-on notebook</div><div style="font-family:Oswald,sans-serif;font-size:26px;line-height:1.2">Making Gradient Descent Fast (Loops vs Vectorization)</div><p>Run all three versions, the timing table and the profiler yourself, and compare with your own machine.</p><a class="go" href="https://www.kaggle.com/code/shikhapallavi/making-gradient-descent-fast-loops-vs-vectorizati" target="_blank" rel="noopener">Open the notebook on Kaggle &rarr;</a><div style="font-size:13px;opacity:.7">Free to run and reuse under Apache 2.0. Please credit Shikha Pallavi.</div></aside>
+
+<footer class="foot"><p>Thanks for reading. That completes the series for now. More posts on ML engineering and ML systems are on the way.</p><nav class="series" aria-label="Series navigation"><span class="lbl">Series</span><a href="part-1-foundations.html">1 · Foundations</a><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><span class="cur" aria-current="page">4 · Fast Gradient Descent</span></nav><p class="copy">&copy; 2026 Shikha Pallavi. All rights reserved. Please do not copy or republish this post without written permission. Sharing the link is welcome.</p></footer>
+</div>
+<script>
+const DATA={1000:[0.016,0.0015,0.0010],10000:[0.143,0.0049,0.0043],100000:[1.480,0.0693,0.0831],1000000:[null,1.1537,0.6859]};
+const NAMES=[["Python loop","var(--red)"],["NumPy","var(--blue)"],["Matrix","var(--green)"]];
+let cur=100000;
+const fmt=t=>t==null?"not run":(t>=1?t.toFixed(2)+" s":(t*1000).toFixed(t<0.01?1:0)+" ms");
+const sizes=document.getElementById("sizes"),rows=document.getElementById("rows"),verdict=document.getElementById("verdict");
+function build(){
+  sizes.innerHTML="";
+  Object.keys(DATA).forEach(k=>{const b=document.createElement("button");b.textContent=Number(k).toLocaleString("en-US");b.setAttribute("aria-pressed",String(+k===cur));b.onclick=()=>{cur=+k;build();};sizes.appendChild(b);});
+  rows.innerHTML="";
+  const d=DATA[cur];
+  NAMES.forEach((n,i)=>{const r=document.createElement("div");r.className="row";r.innerHTML='<span class="nm" style="color:'+n[1]+'">'+n[0]+'</span><div class="track"><i style="background:'+n[1]+'"></i></div><span class="tm">&nbsp;</span>';rows.appendChild(r);});
+  verdict.innerHTML="&nbsp;";
+}
+function race(){
+  const d=DATA[cur],mx=Math.max(...d.filter(v=>v!=null));
+  [...rows.children].forEach((r,i)=>{
+    const bar=r.querySelector("i"),tm=r.querySelector(".tm");
+    bar.style.transition="none";bar.style.width="0%";void bar.offsetWidth;
+    bar.style.transition="";bar.style.width=d[i]==null?"0%":Math.max(2,d[i]/mx*100)+"%";
+    tm.textContent=fmt(d[i]);
+  });
+  verdict.textContent=d[0]!=null?"NumPy was about "+Math.round(d[0]/d[1])+"x faster than the loop here.":"At this size only the vectorized versions are practical.";
+}
+document.getElementById("go").onclick=race;build();
+const Q=[
+ {q:"All three versions give the same theta values. What does that tell us?",o:["The loop is secretly vectorized","Speed changed, the answer did not, so the comparison is fair","The data was too small to matter"],a:1,e:"Checking that results agree first means a speedup is a real speedup, not a shortcut that changes the answer."},
+ {q:"Why is the plain Python loop slower?",o:["Python cannot do arithmetic","Every step passes through the interpreter, one sample at a time","It uses more memory for theta"],a:1,e:"Interpreter overhead on each element is the main cost. NumPy does the same work in compiled code."},
+ {q:"Before optimizing a slow program, what should you do first?",o:["Rewrite everything in a faster language","Profile it to see where the time goes","Add more steps"],a:1,e:"Profiling shows what actually dominates the time, so you fix the right thing."}
+];
+const quiz=document.getElementById("quiz"),score=document.getElementById("score");let got=0,done=0;
+Q.forEach(q=>{const d=document.createElement("div");d.className="q";d.innerHTML='<div class="qt">'+q.q+'</div><div class="opts"></div><div class="fb"></div>';
+ const ob=d.querySelector(".opts"),fb=d.querySelector(".fb");let answered=false;
+ q.o.forEach((t,i)=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>{if(answered)return;answered=true;done++;
+  if(i===q.a){got++;b.classList.add("ok");fb.textContent="Right. "+q.e;}else{b.classList.add("no");ob.children[q.a].classList.add("ok");fb.textContent="Not quite. "+q.e;}
+  if(done===Q.length)score.textContent="You got "+got+" of "+Q.length+".";};ob.appendChild(b);});
+ quiz.appendChild(d);});
+</script>
