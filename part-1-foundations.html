@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>html{background:#26292d;color-scheme:dark}body{margin:0}[hidden]{display:none!important}</style>
-<meta name="description" content="How does a computer learn without being told the rules? Try a spam filter that learns, watch a computer find groups on its own, and train a tiny agent with rewards. Part 1 of a visual, interactive machine learning series.">
-<meta property="og:title" content="How a Computer Learns Without Being Told the Rules">
-<meta property="og:description" content="How does a computer learn without being told the rules? Try a spam filter that learns, watch a computer find groups on its own, and train a tiny agent with rewards. Part 1 of a visual, interactive machine learning series.">
+<meta name="description" content="Part 1 of a visual, interactive machine learning series: what ML is, how it differs from normal programming, and the three types of ML.">
+<meta property="og:title" content="Machine Learning Made Easy">
+<meta property="og:description" content="Part 1 of a visual, interactive machine learning series: what ML is, how it differs from normal programming, and the three types of ML.">
 <meta property="og:type" content="article">
 <meta name="author" content="Shikha Pallavi">
-<title>How a Computer Learns Without Being Told the Rules</title>
+<title>Machine Learning Made Easy</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Caveat:wght@600;700&family=Nunito:wght@400;600;800&display=swap">
 <style>
-/* Layout: chalkboard column, one board per idea, a live demo on most boards */
+/* Layout: one chalkboard column, each idea is a "board" with a chalk-underlined heading and a small animated drawing */
 :root{
   --board:#26292d; --board2:#1d1f22; --chalk:#f4f1ea; --chalk-dim:#c4c1b8;
   --blue:#5ad1ff; --orange:#ffb347; --pink:#ff86bd; --green:#8fe58b; --red:#ff6b6b;
@@ -20,7 +20,6 @@
   --f-display:'Oswald','Arial Narrow',Impact,sans-serif;
   --f-hand:'Caveat','Comic Sans MS',cursive;
   --f-body:'Nunito','Segoe UI',system-ui,sans-serif;
-  --f-math:'Cambria Math','Times New Roman',Georgia,serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -31,87 +30,95 @@ body{
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:32px 64px;
 }
-.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:60px}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:.01em}
-h1{font-size:clamp(40px,9vw,72px);font-weight:700}
-h1 .b,h2 .b{color:var(--blue)}
-h2{font-size:clamp(28px,6vw,40px);font-weight:700;display:inline-block;align-self:flex-start;padding-bottom:6px;border-bottom:4px solid var(--chalk);border-radius:2px}
+h1{font-size:clamp(42px,9vw,76px);font-weight:700}
+h1 .b{color:var(--blue)}
+h2{font-size:clamp(30px,6vw,42px);font-weight:700;display:inline-block;padding-bottom:6px;border-bottom:4px solid var(--chalk);border-radius:2px}
+h2 .b{color:var(--blue)}
+h3{font-size:24px;font-weight:500}
 p{margin:0;max-width:65ch}
+.hand{font-family:var(--f-hand);font-size:26px;line-height:1.2}
 .eyebrow{font-family:var(--f-hand);font-size:28px;color:var(--orange);display:block;margin-bottom:6px}
 mark{background:none;color:var(--chalk);font-weight:800;box-shadow:inset 0 -.45em 0 rgba(90,209,255,.35)}
 .board{display:flex;flex-direction:column;gap:20px}
 .hero{display:flex;flex-direction:column;gap:18px;padding-top:12px}
 .hero .lead{font-size:21px;max-width:56ch}
-.doodle{display:flex;gap:10px;flex-wrap:wrap}
+.hero .doodle{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .chip{font-family:var(--f-hand);font-size:24px;padding:2px 14px;border:2px solid currentColor;border-radius:999px;display:inline-block;animation:bob 3s ease-in-out infinite}
-.chip:nth-child(2){animation-delay:.4s}.chip:nth-child(3){animation-delay:.8s}.chip:nth-child(4){animation-delay:1.2s}
-@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1.5deg)}}
+.chip:nth-child(2){animation-delay:.4s}.chip:nth-child(3){animation-delay:.8s}
 .c-blue{color:var(--blue)}.c-orange{color:var(--orange)}.c-pink{color:var(--pink)}.c-green{color:var(--green)}.c-red{color:var(--red)}
-.note{font-family:var(--f-hand);font-size:24px;color:var(--orange);line-height:1.25}
-.card{border:2px dashed var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;background:rgba(0,0,0,.14)}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1.5deg)}}
+
+/* compare cards */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:20px}
+.card{border:2px dashed var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0;background:rgba(0,0,0,.14)}
 .card.hl{border-color:var(--blue);border-style:solid}
-.tag{font-family:var(--f-hand);font-size:26px}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+.card .tag{font-family:var(--f-hand);font-size:26px}
+.node{font-family:var(--f-hand);font-size:25px;padding:4px 16px;border:2.5px solid var(--chalk);border-radius:6px 10px 7px 11px;background:var(--board2)}
+.node.big{padding:10px 22px}
+.node.blue{border-color:var(--blue);color:var(--blue)}
+.node.orange{border-color:var(--orange);color:var(--orange)}
+.node.green{border-color:var(--green);color:var(--green)}
+.node.empty{border-style:dashed;color:var(--chalk-dim)}
+.arrow{position:relative;width:3px;height:38px;background:var(--chalk-dim);margin-left:36px;border-radius:2px}
+.arrow::after{content:"";position:absolute;left:-5px;bottom:-4px;border:6.5px solid transparent;border-top:10px solid var(--chalk-dim);border-bottom:0}
+.arrow i{position:absolute;left:-3px;top:0;width:9px;height:9px;border-radius:50%;background:var(--orange);animation:drip 1.6s linear infinite}
+.arrow.blue i{background:var(--blue)}
+@keyframes drip{0%{top:-2px;opacity:0}15%{opacity:1}85%{opacity:1}100%{top:30px;opacity:0}}
+.note{font-family:var(--f-hand);font-size:24px;color:var(--orange)}
 
-button{font-family:var(--f-hand);font-size:23px;background:transparent;color:var(--chalk);border:2.5px solid var(--chalk-dim);border-radius:999px;padding:2px 18px;cursor:pointer;transition:transform .15s,background .15s}
-button:hover{transform:scale(1.05);background:rgba(255,255,255,.08)}
-button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
-button[aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:rgba(90,209,255,.12)}
-button.ok{border-color:var(--green);color:var(--green);background:rgba(143,229,139,.12)}
-button.no{border-color:var(--red);color:var(--red);background:rgba(255,107,107,.12)}
-.btns{display:flex;gap:10px;flex-wrap:wrap}
-.ctl{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ctl label{font-family:var(--f-hand);font-size:24px;display:flex;justify-content:space-between;gap:10px}
-.ctl output{color:var(--orange)}
-input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+/* spam belt */
+.belt{overflow:hidden;border:2px solid var(--line);border-radius:12px;padding:14px 0;background:rgba(0,0,0,.2);position:relative}
+.belt::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--board) 0,transparent 12%,transparent 88%,var(--board) 100%);pointer-events:none}
+.belt-track{display:flex;gap:12px;width:max-content;animation:belt 22s linear infinite}
+.mail{font-family:var(--f-body);font-weight:600;font-size:15px;padding:6px 14px;border-radius:8px;border:2px solid;white-space:nowrap}
+.mail.s{color:var(--red);border-color:var(--red)}
+.mail.n{color:var(--green);border-color:var(--green)}
+@keyframes belt{to{transform:translateX(-50%)}}
+.rules{background:var(--board2);border-radius:10px;padding:16px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;line-height:1.7;overflow-x:auto;max-width:100%}
+.rules .k{color:var(--pink)}.rules .s{color:var(--orange)}.rules .c{color:var(--chalk-dim)}
 
-.svgbox{border:2px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);padding:8px;max-width:100%}
+/* type cards */
+.types{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
+.type{border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;border:2.5px solid;min-width:0;background:rgba(0,0,0,.16);transition:transform .2s}
+.type:hover{transform:translateY(-4px) rotate(-.6deg)}
+.type h3{font-size:26px}
+.type .big{font-family:var(--f-hand);font-size:40px;line-height:1}
+.t1{border-color:var(--blue)}.t1 h3,.t1 .big{color:var(--blue)}
+.t2{border-color:var(--orange)}.t2 h3,.t2 .big{color:var(--orange)}
+.t3{border-color:var(--green)}.t3 h3,.t3 .big{color:var(--green)}
+.type p{font-size:16px;color:var(--chalk-dim)}
+
+.sub{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+.list{display:flex;flex-direction:column;gap:6px;margin:4px 0 0;padding:0;list-style:none}
+.list li{font-family:var(--f-hand);font-size:25px;display:flex;gap:10px;align-items:baseline}
+.list li::before{content:"–";color:var(--chalk-dim)}
+.svgbox{border:2px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);padding:10px;max-width:100%}
 .svgbox svg{display:block;width:100%;height:auto}
 svg text{font-family:var(--f-hand)}
-.stat{font-family:var(--f-hand);font-size:27px;line-height:1.3}
 
-/* small data table on dark board */
-.tablewrap{overflow-x:auto;max-width:100%;border-radius:10px}
-table{border-collapse:collapse;width:100%;min-width:420px;background:#eef3f6;color:#22282c;font-size:16px}
-th{background:#d7eaf1;text-align:left;padding:8px 12px;font-weight:800}
-td{padding:8px 12px;border-top:1px solid #d3dde2;font-variant-numeric:tabular-nums}
-td.e{font-weight:800}
-td.zero{color:#0b8a3a}
-
-/* formulas */
-.formula{font-family:var(--f-math);font-size:clamp(22px,5vw,34px);border:2.5px solid var(--orange);border-radius:10px;padding:12px 18px;background:rgba(255,179,71,.1);color:var(--orange);overflow-x:auto;max-width:100%;white-space:nowrap}
-.formula.blue{border-color:var(--blue);background:rgba(90,209,255,.1);color:var(--blue)}
-.formula i{font-style:italic}
-.formula sub{font-size:.6em}
-.formula span[data-p]{padding:0 4px;border-radius:6px;transition:background .25s,box-shadow .25s}
-.formula span.on{background:rgba(255,255,255,.2);box-shadow:0 0 0 2px var(--chalk)}
-.formula span.dim{opacity:.35}
-
-/* feature chips */
-.flist{display:flex;gap:8px;flex-wrap:wrap}
-.pill{font-family:var(--f-hand);font-size:22px;border:2px solid currentColor;border-radius:999px;padding:0 14px}
-
-/* error method */
-.errs{display:flex;gap:10px;flex-wrap:wrap}
-.err{font-family:var(--f-hand);font-size:30px;min-width:64px;text-align:center;border:2.5px solid;border-radius:10px;padding:2px 12px;transition:all .3s}
-.err.pos{color:var(--green)}.err.neg{color:var(--red)}
-.big{font-family:var(--f-hand);font-size:36px}
-
-.meter{height:14px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
-.meter i{display:block;height:100%;border-radius:99px;transition:width .4s,background .4s}
-
-.quiz{display:flex;flex-direction:column;gap:14px}
+/* quiz */
+.quiz{display:flex;flex-direction:column;gap:16px}
 .q{border:2px dashed var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
-.q .qt{font-weight:800}
+.q .qt{font-weight:800;font-size:18px}
 .opts{display:flex;gap:10px;flex-wrap:wrap}
-.fb{min-height:1.5em;font-size:16px;color:var(--chalk-dim)}
+button{font-family:var(--f-hand);font-size:23px;background:transparent;color:var(--chalk);border:2.5px solid var(--chalk-dim);border-radius:999px;padding:2px 18px;cursor:pointer;transition:transform .15s,background .15s}
+button:hover{transform:scale(1.06);background:rgba(255,255,255,.08)}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+button.ok{border-color:var(--green);color:var(--green);background:rgba(143,229,139,.12)}
+button.no{border-color:var(--red);color:var(--red);background:rgba(255,107,107,.12)}
+.fb{min-height:1.6em;font-size:16px;color:var(--chalk-dim)}
 .score{font-family:var(--f-hand);font-size:28px;color:var(--orange)}
+
 .recap{display:grid;gap:12px}
 .recap div{display:flex;gap:14px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:10px}
-.recap b{font-family:var(--f-display);font-weight:500;min-width:10ch;font-size:20px;flex:none}
+.recap b{font-family:var(--f-display);font-weight:500;min-width:7.5ch;font-size:20px}
 footer{font-family:var(--f-hand);font-size:24px;color:var(--chalk-dim)}
-@media (max-width:520px){.recap b{min-width:8ch}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (prefers-reduced-motion:reduce){
+  .chip,.arrow i,.belt-track,.dot,.bot,.pop{animation:none!important}
+}
 </style>
 
 <style>
@@ -124,233 +131,224 @@ footer{font-family:var(--f-hand);font-size:24px;color:var(--chalk-dim)}
 .foot{display:flex;flex-direction:column;gap:14px;border-top:2px dashed var(--line);padding-top:24px}
 .foot p{font-family:var(--f-body);font-size:16px;color:var(--chalk-dim)}
 </style>
-<style>
-pre{margin:0;background:rgba(0,0,0,.35);border:2px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:14px;line-height:1.5;color:var(--chalk)}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.race{display:flex;flex-direction:column;gap:14px}
-.row{display:grid;grid-template-columns:110px 1fr 90px;gap:10px;align-items:center;font-size:16px}
-.row .nm{font-family:var(--f-hand);font-size:24px}
-.track{height:22px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
-.track i{display:block;height:100%;width:0;border-radius:99px;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
-.row .tm{font-variant-numeric:tabular-nums;text-align:right;color:var(--chalk-dim)}
-.cta{border:2.5px solid var(--green);border-radius:14px;padding:22px 24px;background:rgba(0,0,0,.18);display:flex;flex-direction:column;gap:12px}
-.cta a.go{align-self:flex-start;padding:12px 22px;border-radius:999px;background:var(--green);color:#1d1f22;font-weight:800;text-decoration:none}
-@media (max-width:520px){.row{grid-template-columns:78px 1fr 70px}}
-</style>
-<style>
-.sl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;align-items:start}
-.eq{font-family:var(--f-math);font-size:clamp(18px,4.5vw,26px);color:var(--chalk)}
-.eq b{color:var(--orange)}
-.mini{font-size:15px;color:var(--chalk-dim)}
-.curve path.c{fill:none;stroke:var(--blue);stroke-width:3}
-.axis{stroke:var(--chalk-dim);stroke-width:1.5}
-</style>
-<style>
-.mail{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center;font-size:16px;border-top:1px dashed var(--line);padding:8px 0}
-.mail .t{min-width:0;overflow-wrap:anywhere}
-.badge{font-family:var(--f-hand);font-size:20px;border:2px solid currentColor;border-radius:999px;padding:0 12px;white-space:nowrap;min-width:92px;text-align:center}
-.badge.good{color:var(--green)}.badge.bad{color:var(--red)}.badge.off{color:var(--chalk-dim)}
-.mailhead{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;font-family:var(--f-hand);font-size:22px;color:var(--orange)}
-.mailhead span:nth-child(n+2){min-width:92px;text-align:center}
-input[type=text]{font-family:var(--f-body);font-size:18px;background:rgba(0,0,0,.3);color:var(--chalk);border:2px solid var(--chalk-dim);border-radius:10px;padding:6px 12px;width:100%;max-width:260px}
-input[type=text]:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
-.wchips{display:flex;gap:8px;flex-wrap:wrap}
-.chipw{font-size:15px;border:2px solid var(--red);color:var(--red);border-radius:999px;padding:0 10px}
-.chipw.h{border-color:var(--green);color:var(--green)}
-.tbtn{display:flex;gap:10px;flex-wrap:wrap}
-.item{font-size:16px}
-.fbk{min-height:1.4em;font-size:16px;color:var(--chalk-dim)}
-.cell-lbl{font-family:var(--f-hand);font-size:22px}
-@media (max-width:560px){.mail,.mailhead{grid-template-columns:1fr auto auto;font-size:14px}.badge{min-width:64px;font-size:16px;padding:0 6px}.mailhead span:nth-child(n+2){min-width:64px}}
-</style>
 <div class="wrap">
 
 <nav class="series" aria-label="Series navigation"><a href="index.html" class="lbl" style="border:0;padding:0;margin-right:6px">Machine Learning Basics</a><span class="cur" aria-current="page">1 · Foundations</span><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><a href="part-4-fast-gradient-descent.html">4 · Fast Gradient Descent</a><a href="part-5-gradient-descent.html">5 · Gradient Descent Step by Step</a></nav>
 
 <header class="hero">
-<span class="eyebrow">Part 1 of 5 · Visual and interactive · 6 min read</span>
-<h1>How does a computer learn <span class="b">without being told the rules?</span></h1>
-<p class="by">By Shikha Pallavi</p>
-<p class="lead">Your inbox knows what is spam. Nobody sat down and wrote a rule for every sneaky subject line ever invented. So how does it know? In the next few minutes you will <mark>play with the answer</mark>, not just read it.</p>
-<div class="doodle"><span class="chip c-orange">spam</span><span class="chip c-blue">groups</span><span class="chip c-green">rewards</span><span class="chip c-pink">learning</span></div>
+  <span class="eyebrow">Part 1 of 5 · Visual and interactive · 4 min read</span>
+  <h1><span class="b">Machine</span> Learning<br>Made Easy</h1>
+  <style>.by{font-family:var(--f-body);font-size:16px;font-weight:800;color:var(--chalk-dim);letter-spacing:.04em}.foot .copy{font-size:14px}</style>
+  <p class="by">By Shikha Pallavi</p>
+  <p class="lead">Computers can learn from examples, the same way you learned what a cat looks like. Here is the whole idea in five short boards.</p>
+  <div class="doodle"><span class="chip c-blue">data</span><span class="chip c-orange">patterns</span><span class="chip c-pink">predictions</span></div>
 </header>
 
 <section class="board">
-<h2>Be the <span class="b">rule writer</span></h2>
-<p>Imagine your job is to catch spam by writing rules. Pick one word and say, &ldquo;any email with this word is spam.&rdquo; Next to your rule is a tiny program that learned from 12 example emails. Try to beat it.</p>
-<div class="card hl">
-<div class="tbtn"><label for="kw" class="cell-lbl">My rule: flag emails containing</label><input type="text" id="kw" value="free" maxlength="20" autocomplete="off" aria-label="Keyword for your rule"></div>
-<div class="mailhead" aria-hidden="true"><span>Incoming email</span><span>My rule</span><span>Learner</span></div>
-<div id="mails"></div>
-<div class="stat" id="tally" aria-live="polite"></div>
-<div class="btns"><button id="trick">Spammers change their tricks</button><button id="teach">Show the learner 3 new examples</button><button id="resetm">Start over</button></div>
-<div class="fbk" id="mnote" aria-live="polite">Try the words <b>free</b>, <b>cash</b> or <b>meeting</b>. Which one catches the most spam without false alarms?</div>
-<div class="wchips" id="wchips" aria-label="Words the learner finds suspicious"></div>
-</div>
-<p>Notice what happens when spammers write <b>fr33</b> instead of <b>free</b>. Your rule stops working, and you would have to write a new one, again and again. The learner has the same weakness until it sees a few new examples. Then it fixes itself with no rule-writing at all. <mark>That is the whole idea of machine learning.</mark></p>
-<p class="mini">How the learner works: for every word it counts how often it appeared in spam emails and in normal ones. Words that mostly show up in spam get a positive score, words that mostly show up in normal mail get a negative score, and the scores of an email&rsquo;s words are added up. It is a small counting trick, not a magic brain.</p>
+  <h2>What is <span class="b">ML?</span></h2>
+  <p>Machine Learning is a part of computer science where we <mark>teach computers to learn from data</mark>, find patterns, and make decisions or predictions.</p>
+  <p>Nobody types out every rule. The computer looks at lots of examples and works the rules out itself.</p>
 </section>
 
 <section class="board">
-<h2>Three ways to <span class="b">learn</span></h2>
-<p>The spam learner had an <b>answer key</b>: each example came marked spam or not. That is only one way a computer can learn. Here are all three.</p>
-
-<div class="card">
-<span class="tag c-orange">1 &middot; With an answer key</span>
-<p>Every example comes with the right answer. The computer studies the pairs and learns to answer new ones. This is called <b>supervised learning</b>, and it covers two kinds of jobs. Tap each task to see which kind it is.</p>
-<div class="btns" id="lbl"></div>
-<div class="fbk" id="lblfb" aria-live="polite">Is the answer a <b>label</b> (a category) or a <b>number</b>?</div>
-</div>
-
-<div class="card">
-<span class="tag c-blue">2 &middot; With no answer key</span>
-<p>Here nobody says what anything is. Below are 42 dots. Nobody told the computer there are three clumps. Press the button and watch it work them out by shuffling guesses until they stop changing.</p>
-<div class="svgbox"><svg id="km" viewBox="0 0 400 260" role="img" aria-label="Scatter of dots that a computer groups into three clusters"></svg></div>
-<div class="btns"><button id="kgo">Let it find the groups</button><button id="kshuf">New dots</button></div>
-<div class="fbk" id="knote" aria-live="polite">&nbsp;</div>
-<p class="mini">This is called <b>unsupervised learning</b>. The method here repeats two moves: give every dot to its nearest centre, then move each centre to the middle of its dots.</p>
-</div>
-
-<div class="card">
-<span class="tag c-green">3 &middot; By trial and reward</span>
-<p>A tiny robot starts at the bottom left. The gold star is a treat (+10). The red squares are traps (&minus;10). Every step costs &minus;1, so wandering is a bad idea. It begins knowing nothing. Slide to give it more practice runs and see what it figures out.</p>
-<div class="svgbox"><svg id="rl" viewBox="0 0 360 240" role="img" aria-label="Grid where a robot learns a path to the goal"></svg></div>
-<div class="ctl"><label for="ep"><span>Practice runs</span> <output id="epo">0</output></label><input type="range" id="ep" min="0" max="300" step="5" value="0"></div>
-<div class="btns"><button id="watch">Watch it go</button></div>
-<div class="fbk" id="rnote" aria-live="polite">&nbsp;</div>
-<p class="mini">This is <b>reinforcement learning</b>. The robot keeps a score for every move from every square and nudges those scores after each run. The path you see is simply &ldquo;pick the highest-scoring move at each square.&rdquo;</p>
-</div>
+  <h2>Normal code vs <span class="b">ML</span></h2>
+  <p>In normal programming, you write the logic. In ML, the computer finds the logic. Watch the little dots travel through each one.</p>
+  <div class="two">
+    <div class="card">
+      <span class="tag c-orange">Normal programming</span>
+      <span class="node">input</span><div class="arrow"><i></i></div>
+      <span class="node big blue">logic <small style="font-size:.6em">(you write it)</small></span><div class="arrow"><i></i></div>
+      <span class="node">output</span>
+    </div>
+    <div class="card hl">
+      <span class="tag c-blue">Machine learning</span>
+      <span class="node orange">input + output examples</span><div class="arrow blue"><i></i></div>
+      <span class="node big empty">the computer</span><div class="arrow blue"><i></i></div>
+      <span class="node big blue">logic <small style="font-size:.6em">(a hypothesis)</small></span>
+      <span class="note">now try it on new data:</span>
+      <span class="node orange">new input</span><div class="arrow blue"><i></i></div>
+      <span class="node green">new output</span>
+    </div>
+  </div>
+  <p>That learned logic is called a <mark>hypothesis</mark>. It is the computer's best guess about how inputs turn into outputs.</p>
 </section>
 
 <section class="board">
-<h2>Quick <span class="b">check</span></h2>
-<div class="quiz" id="quiz"></div>
-<div class="score" id="score" aria-live="polite"></div>
+  <h2>Example: <span class="b">spam emails</span></h2>
+  <p>How does your inbox know what is spam?</p>
+  <div class="two">
+    <div class="card">
+      <span class="tag c-orange">The old way</span>
+      <p>A person looks at spam emails, spots patterns, and writes rules.</p>
+      <div class="rules"><span class="c"># patterns a human noticed</span><br><span class="k">if</span> sender.startswith(<span class="s">"noreply@"</span>):<br>&nbsp;&nbsp;&nbsp;&nbsp;spam = <span class="k">True</span><br><span class="k">elif</span> sender.startswith(<span class="s">"promo@"</span>):<br>&nbsp;&nbsp;&nbsp;&nbsp;spam = <span class="k">True</span><br><span class="c"># ...and a hundred more if-else</span></div>
+      <p class="note">Spammers change tricks, so you rewrite the rules forever.</p>
+    </div>
+    <div class="card hl">
+      <span class="tag c-blue">The ML way</span>
+      <p>Show an ML algorithm <mark>thousands of emails</mark> that are already marked spam or not spam. It finds the patterns on its own.</p>
+      <p class="note">Spammers change tricks? Feed it new emails and it learns again.</p>
+    </div>
+  </div>
+  <div class="belt" aria-label="Emails sliding past, some spam and some not">
+    <div class="belt-track">
+      <span class="mail s">promo@deals-4u.com</span><span class="mail n">mom@family.com</span><span class="mail s">noreply@win-prize.net</span><span class="mail n">teacher@school.edu</span><span class="mail s">promo@cheap-meds.biz</span><span class="mail n">friend@mail.com</span><span class="mail s">noreply@free-gift.org</span><span class="mail n">boss@work.com</span>
+      <span class="mail s">promo@deals-4u.com</span><span class="mail n">mom@family.com</span><span class="mail s">noreply@win-prize.net</span><span class="mail n">teacher@school.edu</span><span class="mail s">promo@cheap-meds.biz</span><span class="mail n">friend@mail.com</span><span class="mail s">noreply@free-gift.org</span><span class="mail n">boss@work.com</span>
+    </div>
+  </div>
 </section>
 
 <section class="board">
-<h2>What to <span class="b">remember</span></h2>
-<div class="recap">
-<div><b>The big idea</b><span>Don&rsquo;t write the rules. Show examples and let the computer find them.</span></div>
-<div><b>Answer key</b><span>Examples come with answers. The job is a label (spam or not) or a number (a price).</span></div>
-<div><b>No answer key</b><span>The computer finds natural groups by itself.</span></div>
-<div><b>Rewards</b><span>It tries things and keeps whatever earns the most.</span></div>
-</div>
+  <h2>The 3 types of <span class="b">ML</span></h2>
+  <div class="types">
+    <div class="type t1"><span class="big">1</span><h3>Supervised Learning</h3><p>Learn from labelled data. Every example comes with the right answer (input → output).</p></div>
+    <div class="type t2"><span class="big">2</span><h3>Unsupervised Learning</h3><p>Learn from unlabelled data. Nobody gives answers, so the computer finds groups by itself.</p></div>
+    <div class="type t3"><span class="big">3</span><h3>Reinforcement Learning</h3><p>Learn by trying things. Good moves get rewards, bad moves get penalties.</p></div>
+  </div>
 </section>
 
-<footer class="foot"><p>Next, <a href="part-2-supervised-learning.html" style="color:var(--blue)">Part 2</a> goes deeper into the answer-key kind of learning.</p><nav class="series" aria-label="Series navigation"><span class="lbl">Series</span><span class="cur" aria-current="page">1 · Foundations</span><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><a href="part-4-fast-gradient-descent.html">4 · Fast Gradient Descent</a><a href="part-5-gradient-descent.html">5 · Gradient Descent Step by Step</a></nav><p class="copy">&copy; 2026 Shikha Pallavi. All rights reserved. Please do not copy or republish this post without written permission. Sharing the link is welcome.</p></footer>
+<section class="board">
+  <span class="eyebrow c-blue" style="color:var(--blue)">type 1</span>
+  <h2>Supervised <span class="b">Learning</span></h2>
+  <p>You give the computer <mark>labelled data</mark>: an input and its correct output. It splits into two jobs.</p>
+  <div class="sub">
+    <div class="card hl">
+      <span class="tag c-blue">① Classification</span>
+      <p>Pick a class or category.</p>
+      <ul class="list"><li>spam / not spam</li><li>cat / dog / rabbit</li><li>grade (A, B, C…)</li></ul>
+    </div>
+    <div class="card" style="border-color:var(--pink);border-style:solid">
+      <span class="tag c-pink">② Regression</span>
+      <p>Predict a continuous value, a number that can be anything on a scale.</p>
+      <ul class="list"><li>age</li><li>stock price</li><li>marks / score</li></ul>
+    </div>
+  </div>
+  <p class="note">Quick test: is the answer a label, or a number? Label means classification. Number means regression.</p>
+</section>
+
+<section class="board">
+  <span class="eyebrow" style="color:var(--orange)">type 2</span>
+  <h2>Unsupervised <span class="b">Learning</span></h2>
+  <p>Here the data has <mark>no labels</mark>. The computer looks for natural groups. This is called <b>clustering</b>.</p>
+  <p>Picture a shop's sales: iPhones and chargers. Nobody says which is which, but the computer notices that some items sit together and splits them into two groups.</p>
+  <div class="svgbox"><svg id="cluster" viewBox="0 0 640 260" role="img" aria-label="Scattered dots drifting into two clusters">
+    <line x1="30" y1="230" x2="620" y2="230" stroke="#c4c1b8" stroke-width="3" stroke-linecap="round"/>
+    <line x1="30" y1="230" x2="30" y2="20" stroke="#c4c1b8" stroke-width="3" stroke-linecap="round"/>
+    <ellipse class="halo" cx="210" cy="95" rx="120" ry="58" fill="none" stroke="#ffb347" stroke-width="3" stroke-dasharray="8 7"/>
+    <ellipse class="halo" cx="430" cy="170" rx="120" ry="52" fill="none" stroke="#5ad1ff" stroke-width="3" stroke-dasharray="8 7"/>
+    <text x="210" y="28" text-anchor="middle" font-size="26" fill="#ffb347">iPhones</text>
+    <text x="430" y="252" text-anchor="middle" font-size="26" fill="#5ad1ff" style="display:none">chargers</text>
+    <g id="dots"></g>
+  </svg></div>
+  <p class="note">Dots start mixed up, then settle into groups. That is the computer finding patterns without answers.</p>
+</section>
+
+<section class="board">
+  <span class="eyebrow" style="color:var(--green)">type 3</span>
+  <h2>Reinforcement <span class="b">Learning</span></h2>
+  <p>This one is <mark>goal-oriented</mark>. An agent tries moves, gets <b style="color:var(--green)">rewards</b> for good ones and <b style="color:var(--red)">penalties</b> for bad ones, and slowly learns the best path to its goal. Think of training a puppy with treats.</p>
+  <div class="svgbox"><svg viewBox="0 0 640 220" role="img" aria-label="A robot learns to avoid a trap and reach a star">
+    <rect x="10" y="10" width="620" height="200" rx="14" fill="none" stroke="#c4c1b8" stroke-opacity=".35" stroke-width="2" stroke-dasharray="6 8"/>
+    <g transform="translate(300 110)"><circle r="30" fill="#ff6b6b" fill-opacity=".18" stroke="#ff6b6b" stroke-width="3"/><path d="M-12 -12L12 12M12 -12L-12 12" stroke="#ff6b6b" stroke-width="5" stroke-linecap="round"/></g>
+    <text x="300" y="168" text-anchor="middle" font-size="24" fill="#ff6b6b">trap</text>
+    <g transform="translate(560 110)"><path d="M0 -30L9 -10L31 -8L14 7L19 29L0 18L-19 29L-14 7L-31 -8L-9 -10Z" fill="#8fe58b" fill-opacity=".25" stroke="#8fe58b" stroke-width="3" stroke-linejoin="round"/></g>
+    <text x="560" y="168" text-anchor="middle" font-size="24" fill="#8fe58b">goal</text>
+    <g class="bot"><g transform="translate(0 0)">
+      <rect x="-16" y="-14" width="32" height="26" rx="7" fill="#26292d" stroke="#f4f1ea" stroke-width="3"/>
+      <circle cx="-6" cy="-3" r="3" fill="#5ad1ff"/><circle cx="6" cy="-3" r="3" fill="#5ad1ff"/>
+      <line x1="0" y1="-14" x2="0" y2="-24" stroke="#f4f1ea" stroke-width="3"/><circle cx="0" cy="-26" r="3" fill="#ffb347"/>
+    </g></g>
+    <text class="pop pen" x="300" y="48" text-anchor="middle" font-size="34" fill="#ff6b6b">−1 ouch!</text>
+    <text class="pop rew" x="540" y="48" text-anchor="middle" font-size="34" fill="#8fe58b">+10 yay!</text>
+    <text x="30" y="168" font-size="24" fill="#c4c1b8">start</text>
+  </svg></div>
+  <style>
+    .bot{animation:run 9s ease-in-out infinite}
+    @keyframes run{
+      0%{transform:translate(50px,110px)}
+      22%{transform:translate(255px,110px)}
+      30%{transform:translate(230px,110px)}
+      48%{transform:translate(260px,40px)}
+      70%{transform:translate(430px,40px)}
+      88%,100%{transform:translate(520px,110px)}
+    }
+    .pop{opacity:0}
+    .pen{animation:penal 9s linear infinite}
+    .rew{animation:rewd 9s linear infinite}
+    @keyframes penal{0%,21%{opacity:0}24%,34%{opacity:1}38%,100%{opacity:0}}
+    @keyframes rewd{0%,84%{opacity:0}88%,98%{opacity:1}100%{opacity:0}}
+    .dot{animation:gather 5s ease-in-out infinite alternate}
+    @keyframes gather{from{transform:translate(var(--x0),var(--y0))}to{transform:translate(var(--x1),var(--y1))}}
+    @media (prefers-reduced-motion:reduce){.bot{transform:translate(520px,110px)}.rew{opacity:1}}
+  </style>
+</section>
+
+<section class="board">
+  <h2>Try it: which <span class="b">type?</span></h2>
+  <div class="quiz" id="quiz"></div>
+  <div class="score" id="score">Score: 0 / 4</div>
+</section>
+
+<section class="board">
+  <h2>Recap</h2>
+  <div class="recap">
+    <div><b class="c-blue">ML</b><span>Computers learn from data and make predictions.</span></div>
+    <div><b class="c-blue">Supervised</b><span>Labelled data. Classification picks a category, regression predicts a number.</span></div>
+    <div><b class="c-orange">Unsupervised</b><span>Unlabelled data. Clustering finds groups.</span></div>
+    <div><b class="c-green">Reinforcement</b><span>Goal-oriented. Learns from rewards and penalties.</span></div>
+  </div>
+</section>
+
+<footer class="foot"><p>Thanks for reading. Next in the series, Part 2 looks closely at supervised learning, the most widely used type of ML.</p><nav class="series" aria-label="Series navigation"><span class="lbl">Continue</span><span class="cur" aria-current="page">1 · Foundations</span><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><a href="part-4-fast-gradient-descent.html">4 · Fast Gradient Descent</a><a href="part-5-gradient-descent.html">5 · Gradient Descent Step by Step</a></nav><p class="copy">© 2026 Shikha Pallavi. All rights reserved. Please do not copy or republish this post without written permission. Sharing the link is welcome.</p></footer>
 </div>
+
 <script>
-function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-/* ---------- spam ---------- */
-const TRAIN=[["WIN a FREE cruise now",1],["Claim your free prize today",1],["Cheap meds no prescription",1],["Urgent: you won a cash prize",1],["Free gift card, click now",1],["Limited offer, cheap deals",1],
-["Lunch tomorrow at noon?",0],["Meeting notes from Monday",0],["Your class schedule update",0],["Photos from the weekend trip",0],["Project deadline reminder",0],["Happy birthday from the team",0]];
-const TEACH=[["fr33 pr1ze inside",1],["w1n c@sh today",1],["gift-c4rds 70% off sale",1]];
-const T1=[["Free cruise prize waiting for you",1],["Win cheap gift cards today",1],["Claim cash now, urgent offer",1],["Notes from today's meeting",0],["Weekend lunch schedule",0],["Photos from the team trip",0]];
-const T2=[["fr33 pr1ze 4 u",1],["c@sh w1n n0w",1],["gift-c4rds 70% off",1],["Notes from today's meeting",0],["Weekend lunch schedule",0],["Photos from the team trip",0]];
-const words=t=>t.toLowerCase().match(/[a-z0-9@%\-]+/g)||[];
-function learn(data){const sc={},hc={};let S=0,H=0;data.forEach(([t,y])=>{y?S++:H++;new Set(words(t)).forEach(w=>{const m=y?sc:hc;m[w]=(m[w]||0)+1;});});
- const W={};new Set([...Object.keys(sc),...Object.keys(hc)]).forEach(w=>{W[w]=Math.log(((sc[w]||0)+1)/(S+2))-Math.log(((hc[w]||0)+1)/(H+2));});return W;}
-const score=(W,t)=>words(t).reduce((a,w)=>a+(W[w]||0),0);
-/* ---------- kmeans ---------- */
-function makePoints(seed){const r=mulberry(seed),C=[[80,70],[200,190],[320,80]],P=[];
- const g=()=>{let u=0;for(let i=0;i<6;i++)u+=r();return (u-3)*0.7;};
- C.forEach(c=>{for(let i=0;i<14;i++)P.push([c[0]+g()*30,c[1]+g()*30]);});
- for(let i=P.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[P[i],P[j]]=[P[j],P[i]];}return P;}
-function kmeans(P,seed){const r=mulberry(seed+99);let cs=[];while(cs.length<3){const p=P[Math.floor(r()*P.length)];if(!cs.includes(p))cs.push([...p]);}
- const frames=[];let asg=[];for(let it=0;it<20;it++){const a=P.map(p=>{let b=0,bd=1e9;cs.forEach((c,i)=>{const d=(p[0]-c[0])**2+(p[1]-c[1])**2;if(d<bd){bd=d;b=i;}});return b;});
-  frames.push({cs:cs.map(c=>[...c]),a:a.slice()});
-  const same=asg.length&&a.every((v,i)=>v===asg[i]);asg=a;if(same)break;
-  cs=cs.map((c,i)=>{const m=P.filter((_,j)=>a[j]===i);return m.length?[m.reduce((s,p)=>s+p[0],0)/m.length,m.reduce((s,p)=>s+p[1],0)/m.length]:c;});}
- return frames;}
-/* ---------- RL ---------- */
-const COLS=6,ROWS=4,START=[0,3],GOAL=[5,0],PITS=[[2,2],[2,3],[3,1],[4,1]];
-const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
-function step(s,a){let x=s[0]+DIRS[a][0],y=s[1]+DIRS[a][1];if(x<0||y<0||x>=COLS||y>=ROWS){x=s[0];y=s[1];}
- if(x==GOAL[0]&&y==GOAL[1])return[[x,y],10,true];if(PITS.some(p=>p[0]==x&&p[1]==y))return[[x,y],-10,true];return[[x,y],-1,false];}
-function train(N,seed){const r=mulberry(seed),Q=Array.from({length:COLS*ROWS},()=>[0,0,0,0]);const id=s=>s[1]*COLS+s[0];
- for(let e=0;e<N;e++){let s=[...START];for(let t=0;t<60;t++){let a;if(r()<0.25)a=Math.floor(r()*4);else{const q=Q[id(s)];const m=Math.max(...q);const best=q.map((v,i)=>v===m?i:-1).filter(i=>i>=0);a=best[Math.floor(r()*best.length)];}
-  const [s2,rw,d]=step(s,a);Q[id(s)][a]+=0.5*(rw+(d?0:0.9*Math.max(...Q[id(s2)]))-Q[id(s)][a]);s=s2;if(d)break;}}return Q;}
-function path(Q){let s=[...START];const p=[[...s]];const id=q=>q[1]*COLS+q[0];let status="lost";
- for(let t=0;t<25;t++){const q=Q[id(s)];const m=Math.max(...q);const a=q.indexOf(m);const [s2,rw,d]=step(s,a);s=s2;p.push([...s]);if(d){status=(s[0]==GOAL[0]&&s[1]==GOAL[1])?"goal":"pit";break;}}return{p,status};}
-
-
-const NS="http://www.w3.org/2000/svg";
-function el(p,n,a,txt){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
-const $=id=>document.getElementById(id);
-/* ---- spam game ---- */
-let round=1,taught=false,W=learn(TRAIN);
-const mails=$("mails"),kw=$("kw"),tally=$("tally"),mnote=$("mnote"),wchips=$("wchips");
-function drawMail(){
-  const T=round===1?T1:T2;mails.innerHTML="";
-  const k=kw.value.trim().toLowerCase();let rc=0,rf=0,lc=0,lf=0,ns=0,nh=0;
-  T.forEach(([t,y])=>{
-    y?ns++:nh++;
-    const rule=k.length>0&&t.toLowerCase().includes(k),ln=score(W,t)>0;
-    if(y){if(rule)rc++;if(ln)lc++;}else{if(rule)rf++;if(ln)lf++;}
-    const row=document.createElement("div");row.className="mail";
-    const b=(flag,ok)=>'<span class="badge '+(ok?"good":"bad")+'">'+(flag?"SPAM":"ok")+(ok?" ✓":" ✗")+'</span>';
-    row.innerHTML='<span class="t">'+t.replace(/</g,"&lt;")+'</span>'+b(rule,rule===!!y)+b(ln,ln===!!y);
-    mails.appendChild(row);});
-  tally.innerHTML="My rule: caught <span class='c-orange'>"+rc+"/"+ns+"</span> spam, false alarms <span class='c-orange'>"+rf+"</span>. &nbsp; Learner: caught <span class='c-orange'>"+lc+"/"+ns+"</span>, false alarms <span class='c-orange'>"+lf+"</span>.";
-  const arr=Object.entries(W).filter(e=>e[1]>0.6&&e[0].length>2&&!['you','your','the','for','and','are','now'].includes(e[0])).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  wchips.innerHTML="";const lab=document.createElement("span");lab.className="mini";lab.textContent="Words it learned to distrust:";wchips.appendChild(lab);
-  arr.forEach(e=>{const s=document.createElement("span");s.className="chipw";s.textContent=e[0];wchips.appendChild(s);});
-}
-kw.oninput=drawMail;
-$("trick").onclick=()=>{round=2;mnote.innerHTML="Spammers swapped letters for numbers. Your rule probably stopped working. Did the learner catch them?";drawMail();};
-$("teach").onclick=()=>{if(taught)return;taught=true;W=learn(TRAIN.concat(TEACH));mnote.innerHTML="The learner saw 3 new spam examples and updated its word scores. No rule was rewritten.";drawMail();};
-$("resetm").onclick=()=>{round=1;taught=false;W=learn(TRAIN);kw.value="free";mnote.innerHTML="Try the words <b>free</b>, <b>cash</b> or <b>meeting</b>. Which one catches the most spam without false alarms?";drawMail();};
-drawMail();
-/* ---- label vs number ---- */
-const LB=[["Will this email be spam?","label"],["Tomorrow's temperature","number"],["Cat or dog photo?","label"],["A house's price","number"],["Will the customer cancel?","label"],["Minutes until the bus arrives","number"]];
-const lbl=$("lbl"),lblfb=$("lblfb");let lright=0,ldone=0;
-lbl.innerHTML="";
-LB.forEach(([t,a])=>{const w=document.createElement("div");w.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%";
-  w.innerHTML='<span class="item" style="flex:1 1 180px">'+t+'</span>';
-  ["label","number"].forEach(x=>{const b=document.createElement("button");b.textContent=x;b.setAttribute("aria-label",t+": "+x);b.onclick=()=>{if(w.dataset.d)return;w.dataset.d=1;if(x===a){b.classList.add("ok");lright++;}else{b.classList.add("no");[...w.querySelectorAll("button")].find(q=>q.textContent===a).classList.add("ok");}
-    ldone++;lblfb.innerHTML=ldone<LB.length?(x===a?"Right.":"Not quite.")+" A <b>label</b> answer picks a category. A <b>number</b> answer is measured."+" ("+ldone+"/"+LB.length+")":"All done: "+lright+" of "+LB.length+" right. Label answers are called <b>classification</b>, number answers are called <b>regression</b>.";};w.appendChild(b);});
-  lbl.appendChild(w);});
-lbl.style.flexDirection="column";
-/* ---- k-means ---- */
-const KS=[5,3,7,1];let ki=0,pts=makePoints(KS[0]),timer=null;
-const km=$("km"),knote=$("knote"),COLS_=["#5ad1ff","#ffb347","#8fe58b"];
-function drawK(f){km.innerHTML="";pts.forEach((p,i)=>el(km,"circle",{cx:p[0]+20,cy:p[1]+10,r:6,fill:f?COLS_[f.a[i]]:"#c4c1b8",opacity:f?0.9:0.6}));
-  if(f)f.cs.forEach((c,i)=>{el(km,"circle",{cx:c[0]+20,cy:c[1]+10,r:10,fill:"none",stroke:COLS_[i],"stroke-width":3});el(km,"path",{d:"M"+(c[0]+14)+" "+(c[1]+10)+"h12M"+(c[0]+20)+" "+(c[1]+4)+"v12",stroke:COLS_[i],"stroke-width":3});});}
-function runK(){if(timer)clearInterval(timer);const F=kmeans(pts,KS[ki]);let i=0;knote.textContent="Round 1: every dot joins its nearest centre (the + marks).";
-  drawK(F[0]);timer=setInterval(()=>{i++;if(i>=F.length){clearInterval(timer);timer=null;const sz=[0,1,2].map(c=>F[F.length-1].a.filter(v=>v===c).length);
-     knote.textContent=sz.every(s=>s===14)?"Settled after "+F.length+" rounds: three clean groups of 14. Nobody gave it a single label.":"Unlucky start: it settled on a lopsided split ("+sz.join(" / ")+"). Real tools repeat this from several starting points and keep the best. Press New dots to try again.";return;}
-     drawK(F[i]);knote.textContent="Round "+(i+1)+": centres moved to the middle of their dots, dots re-pick their nearest centre.";},900);}
-$("kgo").onclick=runK;$("kshuf").onclick=()=>{if(timer){clearInterval(timer);timer=null;}ki=(ki+1)%KS.length;pts=makePoints(KS[ki]);drawK(null);knote.textContent="New dots. Press the button.";};
-drawK(null);
-/* ---- RL grid ---- */
-const rl=$("rl"),ep=$("ep"),epo=$("epo"),rnote=$("rnote");let aTimer=null,curPath=null;
-function drawR(p,agent){rl.innerHTML="";const S=60;
-  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const pit=PITS.some(q=>q[0]===x&&q[1]===y),goal=x===GOAL[0]&&y===GOAL[1];
-    el(rl,"rect",{x:x*S+2,y:y*S+2,width:S-4,height:S-4,rx:8,fill:pit?"rgba(255,107,107,.35)":goal?"rgba(255,179,71,.4)":"rgba(255,255,255,.06)",stroke:pit?"#ff6b6b":goal?"#ffb347":"rgba(244,241,234,.18)","stroke-width":2});
-    if(goal)el(rl,"text",{x:x*S+30,y:y*S+40,"text-anchor":"middle","font-size":30,fill:"#ffb347"},"★");
-    if(pit)el(rl,"text",{x:x*S+30,y:y*S+38,"text-anchor":"middle","font-size":26,fill:"#ff6b6b"},"✕");}
-  el(rl,"text",{x:START[0]*S+30,y:START[1]*S+54,"text-anchor":"middle","font-size":13,fill:"#c4c1b8"},"start");
-  if(p&&p.length>1){el(rl,"polyline",{points:p.map(q=>(q[0]*S+30)+","+(q[1]*S+30)).join(" "),fill:"none",stroke:"#8fe58b","stroke-width":4,"stroke-linejoin":"round","stroke-linecap":"round",opacity:.85});}
-  const a=agent||START;el(rl,"circle",{cx:a[0]*S+30,cy:a[1]*S+30,r:12,fill:"#ff86bd"});}
-function updR(){if(aTimer){clearInterval(aTimer);aTimer=null;}const N=+ep.value;epo.textContent=N;const Q=train(N,7);const r=path(Q);curPath=r.p;
-  const st=r.status;drawR(st==="goal"?r.p:(N===0?null:r.p.slice(0,8)));
-  rnote.textContent=N===0?"With 0 practice runs it knows nothing, so every square looks the same to it.":st==="goal"?"After "+N+" practice runs it reaches the star in "+(r.p.length-1)+" steps. That is the shortest possible route.":st==="pit"?"After "+N+" runs it has learned some things but still walks into a trap sometimes. Keep practicing.":"After "+N+" runs it still wanders without finding the star. Keep practicing.";}
-ep.oninput=updR;
-$("watch").onclick=()=>{updR();const P=curPath.slice(0,26);let i=0;aTimer=setInterval(()=>{drawR(P.slice(0,i+1),P[i]);i++;if(i>=P.length){clearInterval(aTimer);aTimer=null;}},350);};
-updR();
-/* ---- quiz ---- */
-const Q=[
- {q:"Which job is a good fit for 'show examples and let the computer find the rules'?",o:["Adding two numbers","Spotting spam in a huge inbox","Printing today's date"],a:1,e:"Adding numbers has a fixed rule you can write in one line. Spam keeps changing, so examples work better than rules."},
- {q:"A program groups customers by shopping habits, and nobody told it what the groups should be. What kind of learning is that?",o:["Learning with no answer key","Learning with an answer key","Learning with rewards only"],a:0,e:"No labels were given, so the computer found the groups itself."},
- {q:"You want to predict next week's temperature. Is the answer a label or a number?",o:["A label","A number","Neither"],a:1,e:"A temperature is a measured number, so this is the number kind of job (regression)."}
-];
-const quiz=$("quiz"),score_=$("score");let got=0,done=0;
-Q.forEach(q=>{const d=document.createElement("div");d.className="q";d.innerHTML='<div class="qt">'+q.q+'</div><div class="opts"></div><div class="fb"></div>';
- const ob=d.querySelector(".opts"),fb=d.querySelector(".fb");let answered=false;
- q.o.forEach((t,i)=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>{if(answered)return;answered=true;done++;
-  if(i===q.a){got++;b.classList.add("ok");fb.textContent="Right. "+q.e;}else{b.classList.add("no");ob.children[q.a].classList.add("ok");fb.textContent="Not quite. "+q.e;}
-  if(done===Q.length)score_.textContent="You got "+got+" of "+Q.length+".";};ob.appendChild(b);});
- quiz.appendChild(d);});
-
+(function(){
+  // clustering dots: deterministic pseudo-random start spots, two target groups
+  var g=document.getElementById('dots'),ns='http://www.w3.org/2000/svg';
+  var seed=7;function r(){seed=(seed*9301+49297)%233280;return seed/233280}
+  var A=[[160,70],[200,60],[240,75],[180,100],[225,105],[265,95],[150,110],[205,85],[250,120],[190,125]];
+  var B=[[390,160],[430,150],[470,165],[410,185],[450,190],[495,175],[380,180],[430,170]];
+  function add(t,col,x1,y1){
+    var x0=60+r()*540,y0=40+r()*170;
+    var c=document.createElementNS(ns,t==='o'?'circle':'path');
+    if(t==='o'){c.setAttribute('r','7');c.setAttribute('fill','none');c.setAttribute('stroke',col);c.setAttribute('stroke-width','3')}
+    else{c.setAttribute('d','M-7 -7L7 7M7 -7L-7 7');c.setAttribute('stroke',col);c.setAttribute('stroke-width','3');c.setAttribute('stroke-linecap','round')}
+    c.setAttribute('class','dot');
+    c.style.setProperty('--x0',x0+'px');c.style.setProperty('--y0',y0+'px');
+    c.style.setProperty('--x1',x1+'px');c.style.setProperty('--y1',y1+'px');
+    c.style.animationDelay=(-r()*2)+'s';
+    c.style.transform='translate('+x1+'px,'+y1+'px)';
+    g.appendChild(c);
+  }
+  A.forEach(function(p){add('o','#ffb347',p[0],p[1])});
+  B.forEach(function(p){add('x','#5ad1ff',p[0],p[1])});
+  // quiz
+  var items=[
+    {q:"Predict tomorrow's house price from past sales data with known prices.",a:0,o:["Supervised","Unsupervised","Reinforcement"],e:"Known prices are labels, and a price is a number, so this is supervised regression."},
+    {q:"Group shoppers into segments by buying habits. No one has labelled them.",a:1,o:["Supervised","Unsupervised","Reinforcement"],e:"No labels and the goal is finding groups. That is clustering."},
+    {q:"A game bot learns to win by getting points for good moves and losing points for bad ones.",a:2,o:["Supervised","Unsupervised","Reinforcement"],e:"Rewards and penalties toward a goal means reinforcement learning."},
+    {q:"Decide if a photo shows a cat, a dog, or a rabbit, using photos already labelled.",a:0,o:["Supervised","Unsupervised","Reinforcement"],e:"Labelled photos and a category answer make this supervised classification."}
+  ];
+  var box=document.getElementById('quiz'),sc=document.getElementById('score'),pts=0,done=0;
+  items.forEach(function(it,i){
+    var d=document.createElement('div');d.className='q';
+    var t=document.createElement('div');t.className='qt';t.textContent=(i+1)+'. '+it.q;
+    var o=document.createElement('div');o.className='opts';
+    var f=document.createElement('div');f.className='fb';f.setAttribute('aria-live','polite');
+    var answered=false;
+    it.o.forEach(function(lab,j){
+      var b=document.createElement('button');b.type='button';b.id='q'+i+'o'+j;b.textContent=lab;
+      b.addEventListener('click',function(){
+        if(answered)return;answered=true;done++;
+        var bs=o.querySelectorAll('button');
+        if(j===it.a){b.className='ok';pts++;f.textContent='Yes! '+it.e}
+        else{b.className='no';bs[it.a].className='ok';f.textContent='Not quite. '+it.e}
+        sc.textContent='Score: '+pts+' / 4'+(done===4?(pts===4?'  Perfect, you got it!':'  Nice work, read the boards again to lock it in.'):'');
+      });
+      o.appendChild(b);
+    });
+    d.appendChild(t);d.appendChild(o);d.appendChild(f);box.appendChild(d);
+  });
+})();
 </script>
+
