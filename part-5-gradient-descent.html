@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html{background:#26292d;color-scheme:dark}body{margin:0}[hidden]{display:none!important}</style>
+<meta name="description" content="Part 5 of a visual, interactive machine learning series: the cost curve, the slope, the gradient descent update rule and how the learning rate changes everything.">
+<meta property="og:title" content="Gradient Descent, Step by Step">
+<meta property="og:description" content="Part 5 of a visual, interactive machine learning series: the cost curve, the slope, the gradient descent update rule and how the learning rate changes everything.">
+<meta property="og:type" content="article">
+<meta name="author" content="Shikha Pallavi">
+<title>Gradient Descent, Step by Step</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Caveat:wght@600;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: chalkboard column, one board per idea, a live demo on most boards */
+:root{
+  --board:#26292d; --board2:#1d1f22; --chalk:#f4f1ea; --chalk-dim:#c4c1b8;
+  --blue:#5ad1ff; --orange:#ffb347; --pink:#ff86bd; --green:#8fe58b; --red:#ff6b6b;
+  --line:rgba(244,241,234,.18);
+  --f-display:'Oswald','Arial Narrow',Impact,sans-serif;
+  --f-hand:'Caveat','Comic Sans MS',cursive;
+  --f-body:'Nunito','Segoe UI',system-ui,sans-serif;
+  --f-math:'Cambria Math','Times New Roman',Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--board);
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(255,255,255,.07),transparent 55%),radial-gradient(ellipse at 90% 60%,rgba(255,255,255,.05),transparent 50%);
+  color:var(--chalk);font-family:var(--f-body);font-size:18px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:32px 64px;
+}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:60px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:.01em}
+h1{font-size:clamp(40px,9vw,72px);font-weight:700}
+h1 .b,h2 .b{color:var(--blue)}
+h2{font-size:clamp(28px,6vw,40px);font-weight:700;display:inline-block;align-self:flex-start;padding-bottom:6px;border-bottom:4px solid var(--chalk);border-radius:2px}
+p{margin:0;max-width:65ch}
+.eyebrow{font-family:var(--f-hand);font-size:28px;color:var(--orange);display:block;margin-bottom:6px}
+mark{background:none;color:var(--chalk);font-weight:800;box-shadow:inset 0 -.45em 0 rgba(90,209,255,.35)}
+.board{display:flex;flex-direction:column;gap:20px}
+.hero{display:flex;flex-direction:column;gap:18px;padding-top:12px}
+.hero .lead{font-size:21px;max-width:56ch}
+.doodle{display:flex;gap:10px;flex-wrap:wrap}
+.chip{font-family:var(--f-hand);font-size:24px;padding:2px 14px;border:2px solid currentColor;border-radius:999px;display:inline-block;animation:bob 3s ease-in-out infinite}
+.chip:nth-child(2){animation-delay:.4s}.chip:nth-child(3){animation-delay:.8s}.chip:nth-child(4){animation-delay:1.2s}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1.5deg)}}
+.c-blue{color:var(--blue)}.c-orange{color:var(--orange)}.c-pink{color:var(--pink)}.c-green{color:var(--green)}.c-red{color:var(--red)}
+.note{font-family:var(--f-hand);font-size:24px;color:var(--orange);line-height:1.25}
+.card{border:2px dashed var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;background:rgba(0,0,0,.14)}
+.card.hl{border-color:var(--blue);border-style:solid}
+.tag{font-family:var(--f-hand);font-size:26px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+
+button{font-family:var(--f-hand);font-size:23px;background:transparent;color:var(--chalk);border:2.5px solid var(--chalk-dim);border-radius:999px;padding:2px 18px;cursor:pointer;transition:transform .15s,background .15s}
+button:hover{transform:scale(1.05);background:rgba(255,255,255,.08)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+button[aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:rgba(90,209,255,.12)}
+button.ok{border-color:var(--green);color:var(--green);background:rgba(143,229,139,.12)}
+button.no{border-color:var(--red);color:var(--red);background:rgba(255,107,107,.12)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ctl label{font-family:var(--f-hand);font-size:24px;display:flex;justify-content:space-between;gap:10px}
+.ctl output{color:var(--orange)}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+
+.svgbox{border:2px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);padding:8px;max-width:100%}
+.svgbox svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--f-hand)}
+.stat{font-family:var(--f-hand);font-size:27px;line-height:1.3}
+
+/* small data table on dark board */
+.tablewrap{overflow-x:auto;max-width:100%;border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:420px;background:#eef3f6;color:#22282c;font-size:16px}
+th{background:#d7eaf1;text-align:left;padding:8px 12px;font-weight:800}
+td{padding:8px 12px;border-top:1px solid #d3dde2;font-variant-numeric:tabular-nums}
+td.e{font-weight:800}
+td.zero{color:#0b8a3a}
+
+/* formulas */
+.formula{font-family:var(--f-math);font-size:clamp(22px,5vw,34px);border:2.5px solid var(--orange);border-radius:10px;padding:12px 18px;background:rgba(255,179,71,.1);color:var(--orange);overflow-x:auto;max-width:100%;white-space:nowrap}
+.formula.blue{border-color:var(--blue);background:rgba(90,209,255,.1);color:var(--blue)}
+.formula i{font-style:italic}
+.formula sub{font-size:.6em}
+.formula span[data-p]{padding:0 4px;border-radius:6px;transition:background .25s,box-shadow .25s}
+.formula span.on{background:rgba(255,255,255,.2);box-shadow:0 0 0 2px var(--chalk)}
+.formula span.dim{opacity:.35}
+
+/* feature chips */
+.flist{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-family:var(--f-hand);font-size:22px;border:2px solid currentColor;border-radius:999px;padding:0 14px}
+
+/* error method */
+.errs{display:flex;gap:10px;flex-wrap:wrap}
+.err{font-family:var(--f-hand);font-size:30px;min-width:64px;text-align:center;border:2.5px solid;border-radius:10px;padding:2px 12px;transition:all .3s}
+.err.pos{color:var(--green)}.err.neg{color:var(--red)}
+.big{font-family:var(--f-hand);font-size:36px}
+
+.meter{height:14px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px;transition:width .4s,background .4s}
+
+.quiz{display:flex;flex-direction:column;gap:14px}
+.q{border:2px dashed var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.q .qt{font-weight:800}
+.opts{display:flex;gap:10px;flex-wrap:wrap}
+.fb{min-height:1.5em;font-size:16px;color:var(--chalk-dim)}
+.score{font-family:var(--f-hand);font-size:28px;color:var(--orange)}
+.recap{display:grid;gap:12px}
+.recap div{display:flex;gap:14px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.recap b{font-family:var(--f-display);font-weight:500;min-width:10ch;font-size:20px;flex:none}
+footer{font-family:var(--f-hand);font-size:24px;color:var(--chalk-dim)}
+@media (max-width:520px){.recap b{min-width:8ch}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<style>
+.series{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-family:var(--f-body);font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.series .lbl{color:var(--chalk-dim);margin-right:6px}
+.series a,.series .cur{border:2px solid var(--line);border-radius:999px;padding:2px 14px;color:var(--chalk-dim);text-decoration:none}
+.series a:hover{color:var(--chalk);border-color:var(--chalk-dim)}
+.series a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.series .cur{background:var(--blue);border-color:var(--blue);color:var(--board)}
+.foot{display:flex;flex-direction:column;gap:14px;border-top:2px dashed var(--line);padding-top:24px}
+.foot p{font-family:var(--f-body);font-size:16px;color:var(--chalk-dim)}
+</style>
+<style>
+pre{margin:0;background:rgba(0,0,0,.35);border:2px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:14px;line-height:1.5;color:var(--chalk)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.race{display:flex;flex-direction:column;gap:14px}
+.row{display:grid;grid-template-columns:110px 1fr 90px;gap:10px;align-items:center;font-size:16px}
+.row .nm{font-family:var(--f-hand);font-size:24px}
+.track{height:22px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.track i{display:block;height:100%;width:0;border-radius:99px;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.row .tm{font-variant-numeric:tabular-nums;text-align:right;color:var(--chalk-dim)}
+.cta{border:2.5px solid var(--green);border-radius:14px;padding:22px 24px;background:rgba(0,0,0,.18);display:flex;flex-direction:column;gap:12px}
+.cta a.go{align-self:flex-start;padding:12px 22px;border-radius:999px;background:var(--green);color:#1d1f22;font-weight:800;text-decoration:none}
+@media (max-width:520px){.row{grid-template-columns:78px 1fr 70px}}
+</style>
+<style>
+.sl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;align-items:start}
+.eq{font-family:var(--f-math);font-size:clamp(18px,4.5vw,26px);color:var(--chalk)}
+.eq b{color:var(--orange)}
+.mini{font-size:15px;color:var(--chalk-dim)}
+.curve path.c{fill:none;stroke:var(--blue);stroke-width:3}
+.axis{stroke:var(--chalk-dim);stroke-width:1.5}
+</style>
+<div class="wrap">
+
+<nav class="series" aria-label="Series navigation"><span class="lbl">Series</span><a href="part-1-foundations.html">1 · Foundations</a><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><a href="part-4-fast-gradient-descent.html">4 · Fast Gradient Descent</a><span class="cur" aria-current="page">5 · Gradient Descent Step by Step</span></nav>
+
+<header class="hero">
+<span class="eyebrow">Part 5 of 5 · Visual and interactive · 7 min read</span>
+<h1>Gradient Descent, <span class="b">Step by Step</span></h1>
+<p class="by">By Shikha Pallavi</p>
+<p class="lead">Part 3 showed that learning means making the cost smaller. Here is exactly <mark>how</mark>: look at the shape of the cost, feel the slope, and take small steps downhill. You will drag the numbers yourself.</p>
+<div class="doodle"><span class="chip c-blue">cost curve</span><span class="chip c-orange">slope</span><span class="chip c-green">step</span><span class="chip c-pink">learning rate</span></div>
+</header>
+
+<section class="board">
+<h2>One tiny <span class="b">dataset</span></h2>
+<p>Three points that sit exactly on a line: <b>(1, 2), (2, 4), (3, 6)</b>. To keep things simple, fix &theta;<sub>0</sub> = 0 so the model is just <span class="eq">h(x) = &theta;<sub>1</sub> &middot; x</span>. Only one number, &theta;<sub>1</sub>, is left to learn. Drag it and watch the line and the cost.</p>
+<div class="card hl">
+<div class="sl">
+<div class="svgbox"><svg id="fit" viewBox="0 0 400 300" role="img" aria-label="Three data points and the line y equals theta1 times x"></svg></div>
+<div class="svgbox"><svg id="cost1" viewBox="0 0 400 300" role="img" aria-label="Cost J as a function of theta1"></svg></div>
+</div>
+<div class="ctl"><label for="t1"><span>&theta;<sub>1</sub></span> <output id="t1o">1.00</output></label><input type="range" id="t1" min="0" max="4" step="0.05" value="1"></div>
+<div class="stat" id="stat1"></div>
+<div class="btns"><button data-t="1">Try &theta;<sub>1</sub> = 1</button><button data-t="2">Try &theta;<sub>1</sub> = 2</button><button data-t="3">Try &theta;<sub>1</sub> = 3</button></div>
+<p class="mini">Cost: J(&theta;) = 1/(2m) &middot; &Sigma;(h(x) &minus; y)&sup2; with m = 3. At &theta;<sub>1</sub> = 1 the errors are 1, 2, 3, so J = (1 + 4 + 9) / 6 = 14/6 &asymp; 2.33. At &theta;<sub>1</sub> = 3 the errors are the same size, so J is again 2.33. At &theta;<sub>1</sub> = 2 every error is 0 and J = 0.</p>
+</div>
+</section>
+
+<section class="board">
+<h2>A <span class="b">bowl</span>, with one bottom</h2>
+<p>Plot the cost against &theta;<sub>1</sub> and you get a smooth bowl. The very bottom, where J = 0, is the <mark>global minimum</mark>. For linear regression the bowl has no other dips to get stuck in, so going downhill always works.</p>
+<p>The goal of training: find the &theta;<sub>1</sub> at the bottom. Gradient descent gets there without trying every value.</p>
+</section>
+
+<section class="board">
+<h2>Feel the <span class="b">slope</span></h2>
+<p>At any point on the bowl, the <b>slope</b> tells you which way is downhill.</p>
+<div class="grid2">
+<div class="card"><span class="tag c-red">Slope is negative</span><p>The curve is going down to the right. To go downhill, <b>increase</b> &theta;<sub>1</sub>.</p></div>
+<div class="card"><span class="tag c-green">Slope is positive</span><p>The curve is going up to the right. To go downhill, <b>decrease</b> &theta;<sub>1</sub>.</p></div>
+</div>
+<p>One rule covers both cases, the gradient descent update:</p>
+<div class="formula blue">&theta;<sub>1</sub> := &theta;<sub>1</sub> &minus; &alpha; &middot; slope</div>
+<p>The slope is the derivative of the cost, &part;J/&part;&theta;<sub>1</sub>. <b>Gradient</b> means slope. <b>Descent</b> means moving downward. The Greek letter &alpha; is the <b>learning rate</b>, the size of each step. For this dataset the slope works out to 14/3 &middot; (&theta;<sub>1</sub> &minus; 2).</p>
+</section>
+
+<section class="board">
+<h2>Walk down the <span class="b">bowl</span></h2>
+<p>Pick a learning rate and a starting point, then press Step. The sign of the slope decides the direction. The learning rate decides how far you go.</p>
+<div class="card hl">
+<div class="svgbox"><svg id="cost2" viewBox="0 0 600 300" role="img" aria-label="Walking down the cost curve with gradient descent"></svg></div>
+<div class="grid2">
+<div class="ctl"><label for="al"><span>Learning rate &alpha;</span> <output id="alo">0.10</output></label><input type="range" id="al" min="0.01" max="0.6" step="0.01" value="0.1"></div>
+<div class="ctl"><label for="st"><span>Start at &theta;<sub>1</sub></span> <output id="sto">0.50</output></label><input type="range" id="st" min="0" max="4" step="0.1" value="0.5"></div>
+</div>
+<div class="btns"><button id="step">Step</button><button id="run">Run 20 steps</button><button id="reset">Reset</button></div>
+<div class="eq" id="calc" aria-live="polite">&nbsp;</div>
+<div class="stat" id="stat2"></div>
+</div>
+</section>
+
+<section class="board">
+<h2>The learning rate <span class="b">decides</span></h2>
+<div class="grid2">
+<div class="card"><span class="tag c-blue">&alpha; too small</span><p>Safe, but slow. It needs a great many steps to reach the bottom, which means slow training.</p></div>
+<div class="card"><span class="tag c-red">&alpha; too large</span><p>Each step overshoots the bottom. It can bounce around or <b>diverge</b>, getting further away and missing the minimum.</p></div>
+</div>
+<p>Try presets on the bowl above. Each button sets &alpha; and starts a fresh run.</p>
+<div class="btns" id="presets"></div>
+<div class="note" id="pnote" aria-live="polite">&nbsp;</div>
+<p class="mini">For this dataset the update shrinks the distance to the minimum by the factor (1 &minus; 14&alpha;/3) at every step. When that factor stays between &minus;1 and 1, you converge. That happens for &alpha; below about 0.43. Past that, each step lands further away than the last one.</p>
+</section>
+
+<section class="board">
+<h2>Quick <span class="b">check</span></h2>
+<div class="quiz" id="quiz"></div>
+<div class="score" id="score" aria-live="polite"></div>
+</section>
+
+<section class="board">
+<h2>What to <span class="b">remember</span></h2>
+<div class="recap">
+<div><b>Cost curve</b><span>Plot J against the parameter. For linear regression it is a bowl with one bottom.</span></div>
+<div><b>Slope</b><span>Negative slope: increase the parameter. Positive slope: decrease it.</span></div>
+<div><b>Update</b><span>&theta; := &theta; &minus; &alpha; &middot; slope, repeated until the cost stops shrinking.</span></div>
+<div><b>Learning rate</b><span>Too small is slow. Too large overshoots and can diverge.</span></div>
+</div>
+</section>
+
+<footer class="foot"><p>Thanks for reading. To see this in code, open the <a href="https://www.kaggle.com/code/shikhapallavi/linear-regression-from-scratch-step-by-step" target="_blank" rel="noopener" style="color:var(--green)">Linear Regression from Scratch notebook</a> on Kaggle, or see how to make it fast in <a href="part-4-fast-gradient-descent.html" style="color:var(--blue)">Part 4</a>.</p><nav class="series" aria-label="Series navigation"><span class="lbl">Series</span><a href="part-1-foundations.html">1 · Foundations</a><a href="part-2-supervised-learning.html">2 · Supervised Learning</a><a href="part-3-linear-regression.html">3 · Linear Regression</a><a href="part-4-fast-gradient-descent.html">4 · Fast Gradient Descent</a><span class="cur" aria-current="page">5 · Gradient Descent Step by Step</span></nav><p class="copy">&copy; 2026 Shikha Pallavi. All rights reserved. Please do not copy or republish this post without written permission. Sharing the link is welcome.</p></footer>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const J=t=>14/6*(t-2)*(t-2), G=t=>14/3*(t-2);
+const f2=v=>(Math.abs(v)>=1000?v.toExponential(2):v.toFixed(2));
+function el(p,n,a,txt){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
+/* ---- fit + cost chart on first card ---- */
+const fit=document.getElementById("fit"),c1=document.getElementById("cost1");
+const t1=document.getElementById("t1"),t1o=document.getElementById("t1o"),stat1=document.getElementById("stat1");
+function fitDraw(t){
+  fit.innerHTML="";
+  const X=x=>40+x/4*340,Y=y=>260-y/8*240;
+  el(fit,"line",{x1:40,y1:260,x2:380,y2:260,class:"axis"});el(fit,"line",{x1:40,y1:20,x2:40,y2:260,class:"axis"});
+  el(fit,"text",{x:380,y:282,fill:"#c4c1b8","font-size":18,"text-anchor":"end"},"x");el(fit,"text",{x:46,y:30,fill:"#c4c1b8","font-size":18},"y");
+  [1,2,3].forEach(x=>{const y=2*x;el(fit,"line",{x1:X(x),y1:Y(y),x2:X(x),y2:Y(t*x),stroke:"#ff6b6b","stroke-width":3,"stroke-dasharray":"4 3"});});
+  el(fit,"line",{x1:X(0),y1:Y(0),x2:X(4),y2:Y(4*t),stroke:"#ffb347","stroke-width":3.5,"clip-path":"none"});
+  [[1,2],[2,4],[3,6]].forEach(p=>el(fit,"circle",{cx:X(p[0]),cy:Y(p[1]),r:7,fill:"#5ad1ff"}));
+}
+function curveDraw(svg,w,h,t,hist){
+  svg.innerHTML="";
+  const X=v=>40+v/4*(w-80),Y=v=>h-40-Math.min(v,10)/10*(h-70);
+  el(svg,"line",{x1:40,y1:h-40,x2:w-30,y2:h-40,class:"axis"});el(svg,"line",{x1:40,y1:20,x2:40,y2:h-40,class:"axis"});
+  el(svg,"text",{x:w-30,y:h-46,fill:"#c4c1b8","font-size":18,"text-anchor":"end"},"θ₁");el(svg,"text",{x:48,y:30,fill:"#c4c1b8","font-size":18},"J(θ)");
+  [0,1,2,3,4].forEach(v=>{el(svg,"line",{x1:X(v),y1:h-40,x2:X(v),y2:h-34,class:"axis"});el(svg,"text",{x:X(v),y:h-18,fill:"#c4c1b8","font-size":14,"text-anchor":"middle"},v);});
+  let d="";for(let i=0;i<=80;i++){const v=i/20;d+=(i?"L":"M")+X(v).toFixed(1)+" "+Y(J(v)).toFixed(1);}
+  el(svg,"path",{d:d,fill:"none",stroke:"#5ad1ff","stroke-width":3});
+  el(svg,"text",{x:X(2),y:h-100,fill:"#8fe58b","font-size":17,"text-anchor":"middle"},"global minimum");el(svg,"line",{x1:X(2),y1:h-92,x2:X(2),y2:h-50,stroke:"#8fe58b","stroke-width":2,"stroke-dasharray":"3 3"});
+  if(hist){hist.forEach((v,i)=>{if(Math.abs(v)<=4.4&&v>=-0.4)el(svg,"circle",{cx:X(v),cy:Y(J(v)),r:4,fill:"#8fe58b",opacity:.55});});}
+  if(t>=-0.4&&t<=4.4){
+    const s=G(t),x0=X(t),y0=Y(J(t));
+    const dx=70,ex=x0+dx,ey=y0+(Y(J(t+dx/(w-80)*4))-y0);
+    el(svg,"line",{x1:x0-dx,y1:y0-(ey-y0),x2:ex,y2:ey,stroke:"#ffb347","stroke-width":2.5,"stroke-dasharray":"6 4"});
+    el(svg,"circle",{cx:x0,cy:y0,r:9,fill:"#ff86bd"});
+  } else el(svg,"text",{x:w/2,y:h/2,fill:"#ff6b6b","font-size":22,"text-anchor":"middle"},"θ₁ flew off the chart: diverged");
+}
+function upd1(){const t=+t1.value;t1o.textContent=t.toFixed(2);fitDraw(t);curveDraw(c1,400,300,t);
+  stat1.innerHTML="J(θ) = <span class='c-orange'>"+t.toFixed(2).replace(/^/,"")+"</span> → cost <span class='c-orange'>"+J(t).toFixed(2)+"</span>";
+  stat1.innerHTML="θ₁ = <span class='c-orange'>"+t.toFixed(2)+"</span> &nbsp; cost J = <span class='c-orange'>"+J(t).toFixed(2)+"</span>";}
+t1.oninput=upd1;document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{t1.value=b.dataset.t;upd1();});upd1();
+/* ---- gradient descent walker ---- */
+const c2=document.getElementById("cost2"),al=document.getElementById("al"),alo=document.getElementById("alo"),st=document.getElementById("st"),sto=document.getElementById("sto"),calc=document.getElementById("calc"),stat2=document.getElementById("stat2");
+let th=+st.value,hist=[th],steps=0;
+function draw2(msg){alo.textContent=(+al.value).toFixed(2);sto.textContent=(+st.value).toFixed(2);curveDraw(c2,600,300,th,hist);
+  stat2.innerHTML="steps: <span class='c-orange'>"+steps+"</span> &nbsp; θ₁ = <span class='c-orange'>"+f2(th)+"</span> &nbsp; cost J = <span class='c-orange'>"+f2(J(th))+"</span>";
+  if(msg!==undefined)calc.innerHTML=msg;}
+function step1(){const a=+al.value,s=G(th),n=th-a*s;
+  const m="θ₁ = "+f2(th)+" − "+a.toFixed(2)+" × ("+f2(s)+") = <b>"+f2(n)+"</b>";th=n;hist.push(th);steps++;draw2(m);}
+function reset2(){th=+st.value;hist=[th];steps=0;draw2("Press Step to take the first step.");}
+document.getElementById("step").onclick=step1;
+document.getElementById("run").onclick=()=>{for(let i=0;i<20;i++){if(Math.abs(th)>1e6)break;step1();}};
+document.getElementById("reset").onclick=reset2;
+al.oninput=()=>{alo.textContent=(+al.value).toFixed(2)};st.oninput=reset2;reset2();
+const PR=[["0.02 (small)",0.02,"Very small steps: after 20 steps it is still short of the bottom."],["0.20 (good)",0.2,"Smooth walk down. It reaches the bottom within the 20 steps."],["0.40 (big)",0.4,"Big steps. It jumps from side to side of the bowl, but each jump is smaller, so it still settles."],["0.50 (too large)",0.5,"Each step overshoots further than the last. It diverges."]];
+const pr=document.getElementById("presets"),pn=document.getElementById("pnote");
+PR.forEach(p=>{const b=document.createElement("button");b.textContent="α = "+p[0];b.onclick=()=>{al.value=p[1];st.value=0.5;reset2();for(let i=0;i<20;i++){if(Math.abs(th)>1e6)break;step1();}pn.textContent=p[2];};pr.appendChild(b);});
+const Q=[
+ {q:"The slope at your current point is negative. What should the update do to theta?",o:["Decrease theta","Increase theta","Leave it alone"],a:1,e:"A negative slope means the curve goes down to the right, so moving theta up goes downhill. The update −α·slope adds a positive amount."},
+ {q:"What happens if the learning rate is too large?",o:["Training is slower but safe","The steps can overshoot and diverge","It always finds the minimum faster"],a:1,e:"Steps that are too big jump past the bottom and can land further away each time."},
+ {q:"At the global minimum of the cost curve, what is the slope?",o:["Zero","Large and positive","Large and negative"],a:0,e:"At the bottom of the bowl the curve is flat, so the slope is 0 and the update stops changing theta."}
+];
+const quiz=document.getElementById("quiz"),score=document.getElementById("score");let got=0,done=0;
+Q.forEach(q=>{const d=document.createElement("div");d.className="q";d.innerHTML='<div class="qt">'+q.q+'</div><div class="opts"></div><div class="fb"></div>';
+ const ob=d.querySelector(".opts"),fb=d.querySelector(".fb");let answered=false;
+ q.o.forEach((t,i)=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>{if(answered)return;answered=true;done++;
+  if(i===q.a){got++;b.classList.add("ok");fb.textContent="Right. "+q.e;}else{b.classList.add("no");ob.children[q.a].classList.add("ok");fb.textContent="Not quite. "+q.e;}
+  if(done===Q.length)score.textContent="You got "+got+" of "+Q.length+".";};ob.appendChild(b);});
+ quiz.appendChild(d);});
+</script>
